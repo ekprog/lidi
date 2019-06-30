@@ -7,6 +7,10 @@ Lidi is a small golang library for DI:
 - Setter injection
 - Field injection
 
+```bash
+go get -u github.com/ekprog/lidi
+```
+
 
 ```go
 package main 
