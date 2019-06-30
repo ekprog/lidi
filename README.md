@@ -2,7 +2,7 @@
 >"My Lite implementation Dependency Injection for Golang"
 
 ```bash
-go get -u gopkg.in/ekprog/lidi
+go get -u github.com/ekprog/lidi
 ```
 
 # Overview
@@ -12,10 +12,13 @@ Lidi is a small golang library for DI:
 - Field injection
 
 
-```
+```go
 package main 
 
-import ...
+import (
+	"fmt"
+	"github.com/ekprog/lidi"
+)
 
 type Service1 struct {
 	FieldInject string `lidi:"inject(), name(hello_var)"` //Inject by field with name
@@ -38,8 +41,8 @@ func Invoke(s3 *Service3) {
 	fmt.Println(s3.service2.Service1.FieldInject)
 }
 
-func Test(t *testing.T) {
-	lidi := NewLidi(Settings{
+func main() {
+	c := lidi.NewLidi(lidi.Settings{
 		InvokeErrCheck: true, // Check return value
 	})
 
@@ -49,31 +52,31 @@ func Test(t *testing.T) {
 	s3 := &Service3{}
 
 	// Provide named var
-	if err := lidi.Provide(someVar, Name("hello_var")); err != nil {
+	if err := c.Provide(someVar, lidi.Name("hello_var")); err != nil {
 		panic(err)
 	}
 
 	// Provide Service1
-	if err := lidi.Provide(s1); err != nil {
+	if err := c.Provide(s1); err != nil {
 		panic(err)
 	}
 
 	// Provide Service2
-	if err := lidi.Provide(s2); err != nil {
+	if err := c.Provide(s2); err != nil {
 		panic(err)
 	}
 
 	// Provide Service3
-	if err := lidi.Provide(s3); err != nil {
+	if err := c.Provide(s3); err != nil {
 		panic(err)
 	}
 
 	// Invoke
-	if err := lidi.InvokeFunction(Invoke); err != nil {
+	if err := c.InvokeFunction(Invoke); err != nil {
 		panic(err)
 	}
 }
 ```
 
 # License
-Telebot is distributed under MIT.
+Lidi is distributed under MIT.
