@@ -1,7 +1,8 @@
 package lidi
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"reflect"
@@ -67,12 +68,13 @@ type Option struct {
 }
 
 func Name(name string) Option {
-	return Option{name:name}
+	return Option{name: name}
 }
 
 func (o *Option) apply(d *dependencyOptions) {
 	d.name = o.name
 }
+
 type dependencyOptions struct {
 	name string
 }
@@ -83,7 +85,7 @@ func (obj *dependencyOptions) apply(option Option) {
 
 func newTagValue(tag string) (tagValue, error) {
 	tag_v := tagValue{}
-	err := errors.Errorf("lidi warning: incorrect tag_v format: %s\n", tag)
+	err := errors.New(fmt.Sprintf("lidi warning: incorrect tag_v format: %s\n", tag))
 	fs := strings.Split(tag, ",")
 	for i := range fs {
 		fs[i] = strings.TrimSpace(fs[i])
@@ -148,7 +150,7 @@ func (c *Lidi) getValue(k string) (reflect.Value, error) {
 	if node, ok := c.typed[c.makeId(k)]; ok {
 		return node.value, nil
 	} else {
-		return reflect.Value{}, errors.Errorf("lidi: dependency '%s' not found", k)
+		return reflect.Value{}, errors.New(fmt.Sprintf("lidi: dependency '%s' not found", k))
 	}
 }
 
@@ -177,7 +179,7 @@ func (c *Lidi) Provide(d interface{}, options ...Option) error {
 	}
 
 	if c.isExists(type_id) {
-		return errors.Errorf("lidi: dependency '%s' already exists", type_id)
+		return errors.New(fmt.Sprintf("lidi: dependency '%s' already exists", type_id))
 	}
 
 	// Resolve dependencies for services
@@ -205,7 +207,7 @@ func (c *Lidi) resolveService(d_value reflect.Value) error {
 
 		f_v := reflect.Indirect(d_value).Field(i)
 		if !f_v.IsValid() {
-			return errors.Errorf("lidi: got invalid field '%s'", f_v.Type())
+			return errors.New(fmt.Sprintf("lidi: got invalid field '%s'", f_v.Type()))
 		}
 
 		tag_v, err := newTagValue(tag)
@@ -230,20 +232,20 @@ func (c *Lidi) resolveService(d_value reflect.Value) error {
 		} else { // setter
 			method := d_value.MethodByName(tag_v.injector)
 			if !method.IsValid() {
-				return errors.Errorf("lidi: setter method '%s' not found", tag_v.injector)
+				return errors.New(fmt.Sprintf("lidi: setter method '%s' not found", tag_v.injector))
 			}
 			method_t := method.Type()
 			if method_t.NumIn() != 1 {
-				return errors.Errorf("lidi: setter method '%s' cannot take more than one param",
-					tag_v.injector)
+				return errors.New(fmt.Sprintf("lidi: setter method '%s' cannot take more than one param",
+					tag_v.injector))
 			}
 			p, err := c.getValue(tag_v.name)
 			if err != nil {
 				return err
 			}
 			if p.Type() != method_t.In(0) {
-				return errors.Errorf("lidi: setter method '%s' cannot take param with type '%s'",
-					tag_v.injector, p.Type())
+				return errors.New(fmt.Sprintf("lidi: setter method '%s' cannot take param with type '%s'",
+					tag_v.injector, p.Type()))
 			}
 			err = c.invokeFunction(method, []reflect.Value{p})
 			if err != nil {
@@ -257,7 +259,7 @@ func (c *Lidi) resolveService(d_value reflect.Value) error {
 // Resolve dependencies for one field in service
 func (c *Lidi) injectForward(f_v reflect.Value, name string) error {
 	if !f_v.CanSet() {
-		return errors.Errorf("lidi: cannot inject service in unexported field '%s'", name)
+		return errors.New(fmt.Sprintf("lidi: cannot inject service in unexported field '%s'", name))
 	}
 	k := name
 	if name == "" {
@@ -296,7 +298,7 @@ func (c *Lidi) invokeFunction(func_v reflect.Value, args []reflect.Value) error 
 		return errors.New("lidi: can't invoke an nil func")
 	}
 	if func_t.Kind() != reflect.Func {
-		return errors.Errorf("lidi: can't invoke non-function (type %value)", func_t)
+		return errors.New(fmt.Sprintf("lidi: can't invoke non-function (type %value)", func_t))
 	}
 	// Call function
 	rp := func_v.Call(args)

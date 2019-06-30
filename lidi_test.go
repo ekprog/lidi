@@ -1,9 +1,8 @@
 package lidi
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -17,7 +16,9 @@ func Test_IntProvide(t *testing.T) {
 		t.Error(err)
 	}
 	err = c.InvokeFunction(func(b int) {
-		assert.Equal(t, a, b)
+		if a != b {
+			t.Fatal("Not equal")
+		}
 	})
 	if err != nil {
 		t.Error(err)
@@ -32,7 +33,9 @@ func Test_IntPtrProvide(t *testing.T) {
 		t.Error(err)
 	}
 	err = c.InvokeFunction(func(b *int) {
-		assert.Equal(t, &a, b)
+		if &a != b {
+			t.Fatal("Not equal")
+		}
 	})
 	if err != nil {
 		t.Error(err)
@@ -48,8 +51,9 @@ func Test_IntPtrProvide(t *testing.T) {
 		t.Error(err)
 	})
 	if err != nil {
-		assert.Equal(t, err.Error(),
-			fmt.Sprintf("lidi: dependency '%s' not found", reflect.TypeOf(0).String()))
+		if err.Error() != fmt.Sprintf("lidi: dependency '%s' not found", reflect.TypeOf(0).String()) {
+			t.Fatal("Not equal")
+		}
 	}
 }
 
@@ -66,8 +70,12 @@ func Test_ServicePtrProvide(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = c.InvokeFunction(func(s *S1) {
-		assert.Equal(t, s1, s)
-		assert.Equal(t, s1.test, s.test)
+		if s1 != s {
+			t.Fatal("Not equal")
+		}
+		if s1.test != s.test {
+			t.Fatal("Not equal")
+		}
 	})
 	if err != nil {
 		t.Error(err)
@@ -76,8 +84,9 @@ func Test_ServicePtrProvide(t *testing.T) {
 		t.Error(errors.New("Incompatible types passed"))
 	})
 	if err != nil {
-		assert.Equal(t, err.Error(),
-			fmt.Sprintf("lidi: dependency '%s' not found", reflect.TypeOf(S1{}).String()))
+		if err.Error() != fmt.Sprintf("lidi: dependency '%s' not found", reflect.TypeOf(S1{}).String()) {
+			t.Fatal("Not equal")
+		}
 	}
 }
 
@@ -96,10 +105,21 @@ func Test_ServiceProvide(t *testing.T) {
 
 	s1.test = "changed"
 	err = c.InvokeFunction(func(s S1) {
-		assert.Equal(t, s1.test, "changed")
-		assert.Equal(t, s.test, "awesome")
-		assert.NotEqual(t, &s1, &s)
-		assert.NotEqual(t, s1, s)
+		if s1.test != "changed" {
+			t.Fatal("Not equal")
+		}
+		if s.test != "awesome" {
+			t.Fatal("Not equal")
+		}
+		if s1.test != "changed" {
+			t.Fatal("Equal")
+		}
+		if &s1 == &s {
+			t.Fatal("Equal")
+		}
+		if s1 == s {
+			t.Fatal("Equal")
+		}
 	})
 	if err != nil {
 		t.Error(err)
@@ -133,8 +153,12 @@ func Test_ServiceFieldProvide(t *testing.T) {
 	}
 
 	err := c.InvokeFunction(func(s *S3) {
-		assert.Equal(t, s.Service1, "awesome")
-		assert.Equal(t, s.Service2, 15)
+		if s.Service1 != "awesome" {
+			t.Fatal("Not Equal")
+		}
+		if s.Service2 != 15 {
+			t.Fatal("Not Equal")
+		}
 	})
 	if err != nil {
 		t.Error(err)
@@ -151,8 +175,9 @@ func Test_DependencyExists(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := c.Provide(s1); err != nil {
-		assert.Equal(t, err.Error(),
-			fmt.Sprintf("lidi: dependency '%s' already exists", reflect.TypeOf(s2).String()))
+		if err.Error() != fmt.Sprintf("lidi: dependency '%s' already exists", reflect.TypeOf(s2).String()) {
+			t.Fatal("Not Equal")
+		}
 	} else {
 		t.Fatal("the same types in container")
 	}
@@ -169,8 +194,9 @@ func Test_Unexported(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := c1.Provide(&B{}); err != nil {
-		assert.Equal(t, err.Error(),
-			fmt.Sprintf("lidi: cannot inject service in unexported field '%s'", reflect.TypeOf(&A{}).String()))
+		if err.Error() != fmt.Sprintf("lidi: cannot inject service in unexported field '%s'", reflect.TypeOf(&A{}).String()) {
+			t.Fatal("Not Equal")
+		}
 	} else {
 		t.Fatal(err)
 	}
@@ -187,7 +213,9 @@ func Test_SetterNotFound(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := c1.Provide(&B{}); err != nil {
-		assert.Equal(t, err.Error(), "lidi: setter method 'MySetter' not found")
+		if err.Error() != "lidi: setter method 'MySetter' not found" {
+			t.Fatal("Not Equal")
+		}
 	} else {
 		t.Fatal(err)
 	}
@@ -219,7 +247,9 @@ func Test_Setter(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := c1.InvokeFunction(func(b *B) {
-		assert.Equal(t, b.a.test, "awesome")
+		if b.a.test != "awesome" {
+			t.Fatal("Not Equal")
+		}
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -242,7 +272,9 @@ func Test_AnyParamsInSetter(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := c1.Provide(&OneInjector{}); err != nil {
-		assert.Equal(t, err.Error(), "lidi: setter method 'Injecter' cannot take more than one param")
+		if err.Error() != "lidi: setter method 'Injecter' cannot take more than one param" {
+			t.Fatal("Not Equal")
+		}
 	} else {
 		t.Fatal(err)
 	}
@@ -270,16 +302,16 @@ func Test_Params(t *testing.T) {
 	if err := c1.Provide(a2); err != nil {
 		t.Fatal(err)
 	}
-	assert.NotNil(t, a2.Service1, nil)
+	if a2.Service1 == nil {
+		t.Fatal("Nil")
+	}
 }
-
-
 
 type ErrCheck struct {
 	testData int `lidi:"inject(Inject)"`
 }
 
-func (obj *ErrCheck) Inject(val int) error  {
+func (obj *ErrCheck) Inject(val int) error {
 	obj.testData = val
 	return errors.New("some error")
 }
@@ -295,7 +327,9 @@ func Test_ErrCheck(t *testing.T) {
 
 	v := &ErrCheck{}
 	if err := c1.Provide(v); err != nil {
-		assert.Equal(t, err.Error(), "some error")
+		if err.Error() != "some error" {
+			t.Fatal("Not Equal")
+		}
 	} else {
 		t.Fatal(err)
 	}
