@@ -15,6 +15,11 @@ go get -u github.com/ekprog/lidi
 ```go
 package main 
 
+import (
+	"fmt"
+	"github.com/ekprog/lidi"
+)
+
 type Service1 struct {
 	FieldInject string `lidi:"inject(), name(hello_var)"` //Inject by field with name
 }
