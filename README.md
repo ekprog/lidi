@@ -1,10 +1,6 @@
 # Lidi
 >"My Lite implementation Dependency Injection for Golang"
 
-```bash
-go get -u github.com/ekprog/lidi
-```
-
 # Overview
 Lidi is a small golang library for DI:
 - Constructor injection
@@ -14,11 +10,6 @@ Lidi is a small golang library for DI:
 
 ```go
 package main 
-
-import (
-	"fmt"
-	"github.com/ekprog/lidi"
-)
 
 type Service1 struct {
 	FieldInject string `lidi:"inject(), name(hello_var)"` //Inject by field with name
